@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prove Parallele IC Puddu - Processore File</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.3.2/papaparse.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Ubuntu', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .main-title {
+            color: #1a49e9;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .discipline-selector {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .discipline-btn {
+            padding: 15px 30px;
+            border: 3px solid transparent;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 150px;
+        }
+        
+        .discipline-btn.italiano {
+            background: linear-gradient(45deg, #1c4587, #3c78d8);
+            color: white;
+        }
+        
+        .discipline-btn.matematica {
+            background: linear-gradient(45deg, #9c1810, #dc3545);
+            color: white;
+        }
+        
+        .discipline-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .discipline-btn.active {
+            border-color: #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+        
+        .form-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        select, input[type="file"] {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            transition: border-color 0.3s ease;
+        }
+        
+        select:focus, input[type="file"]:focus {
+            outline: none;
+            border-color: #1a49e9;
+        }
+        
+        .file-upload-section {
+            background: #e3f2fd;
+            border: 2px dashed #1976d2;
+            border-radius: 10px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .file-upload-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        .file-upload-item {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .file-upload-item.drag-over {
+            border: 2px dashed #1976d2;
+            background: #e3f2fd;
+            transform: scale(1.02);
+        }
+        
+        .drop-zone {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        
+        .drop-zone:hover, .drop-zone.drag-over {
+            border-color: #1976d2;
+            background: #f5f5f5;
+        }
+        
+        .drop-zone-text {
+            margin: 10px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .file-upload-item h3 {
+            margin-top: 0;
+            color: #1976d2;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+        
+        .file-input-wrapper input[type="file"] {
+            width: 100%;
+        }
+        
+        .process-section {
+            text-align: center;
+            margin: 40px 0;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin: 0 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #06b640, #059d37);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(6, 182, 64, 0.4);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(45deg, #6c757d, #5a6268);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(45deg, #ffc107, #e0a800);
+            color: #212529;
+        }
+        
+        .btn-email {
+            background: linear-gradient(45deg, #dd5286, #f71139);
+            color: white;
+        }
+        
+        .results-section {
+            margin-top: 40px;
+            display: none;
+        }
+        
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .preview-table th {
+            background: #1a49e9;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .preview-table td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            text-align: center;
+            position: relative;
+        }
+        
+        .preview-table tr:hover {
+            background: #f5f5f5;
+        }
+        
+        .editable-cell {
+            cursor: pointer;
+            position: relative;
+            padding: 8px !important;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+        
+        .editable-cell:hover {
+            background: #e3f2fd !important;
+            border-color: #1976d2;
+        }
+        
+        .editable-cell.editing {
+            background: white !important;
+            border-color: #1976d2 !important;
+            box-shadow: 0 0 5px rgba(25, 118, 210, 0.3);
+        }
+        
+        .edit-input {
+            width: 100%;
+            border: none;
+            padding: 6px;
+            border-radius: 4px;
+            font-size: 13px;
+            text-align: center;
+            background: transparent;
+            outline: none;
+            font-family: inherit;
+        }
+        
+        .edit-select {
+            width: 100%;
+            border: none;
+            padding: 6px;
+            border-radius: 4px;
+            font-size: 13px;
+            background: white;
+            outline: none;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        
+        .editable-hint {
+            font-size: 11px;
+            color: #666;
+            font-style: italic;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        
+        .editable-cell:hover .editable-hint {
+            opacity: 1;
+        }
+        
+        .edit-icons {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            font-size: 10px;
+            color: #1976d2;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        
+        .editable-cell:hover .edit-icons {
+            opacity: 1;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #1a49e9;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .email-info {
+            background: #e8f4fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+            border-left: 4px solid #06b640;
+        }
+        
+        .email-info strong {
+            color: #059d37;
+        }
+        
+        @media (max-width: 768px) {
+            .discipline-selector {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .file-upload-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="main-title">Programma Prove Parallele Puddu (P⁴)</div>
+            <div class="subtitle">Processore automatico file CSV/Excel</div>
+        </div>
+        
+        <div class="discipline-selector">
+            <button class="discipline-btn italiano active" onclick="selectDiscipline('italiano')">
+                📚 ITALIANO
+            </button>
+            <button class="discipline-btn matematica" onclick="selectDiscipline('matematica')">
+                🔢 MATEMATICA
+            </button>
+        </div>
+        
+        <div class="form-section">
+            <h3>📋 Informazioni Generali</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="anno">Anno Scolastico:</label>
+                    <select id="anno">
+                        <option value="2024/2025" selected>2024/2025</option>
+                        <option value="2025/2026">2025/2026</option>
+                        <option value="2026/2027">2026/2027</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="classe">Classe:</label>
+                    <select id="classe">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="sezione">Sezione:</label>
+                    <select id="sezione">
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                        <option value="E">E</option>
+                        <option value="F">F</option>
+                        <option value="G">G</option>
+                        <option value="H">H</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="prova">Tipo di Prova:</label>
+                    <select id="prova">
+                        <option value="Iniziale">Iniziale</option>
+                        <option value="Intermedia">Intermedia</option>
+                        <option value="Finale">Finale</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="file-upload-section">
+            <h3>📁 Caricamento File</h3>
+            <div class="alert alert-info">
+                <strong>Istruzioni:</strong> Carica i due file necessari per l'elaborazione. Il primo contiene le risposte degli studenti, il secondo le risposte corrette.
+            </div>
+            
+            <div class="file-upload-grid">
+                <div class="file-upload-item" id="dropZone1">
+                    <h3>📊 File Risposte Studenti</h3>
+                    <p>File CSV/Excel con le risposte date dagli studenti</p>
+                    <div class="drop-zone" onclick="document.getElementById('file1').click()">
+                        <div>📁 Clicca per selezionare</div>
+                        <div class="drop-zone-text">oppure trascina qui il file</div>
+                    </div>
+                    <input type="file" id="file1" accept=".csv,.xlsx,.xls" onchange="handleFileUpload(1)" style="display: none;">
+                    <div id="file1-status" class="file-status"></div>
+                </div>
+                
+                <div class="file-upload-item" id="dropZone2">
+                    <h3>✅ File Risposte Corrette</h3>
+                    <p>File CSV/Excel con le risposte corrette</p>
+                    <div class="drop-zone" onclick="document.getElementById('file2').click()">
+                        <div>📁 Clicca per selezionare</div>
+                        <div class="drop-zone-text">oppure trascina qui il file</div>
+                    </div>
+                    <input type="file" id="file2" accept=".csv,.xlsx,.xls" onchange="handleFileUpload(2)" style="display: none;">
+                    <div id="file2-status" class="file-status"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="process-section">
+            <button class="btn btn-primary" onclick="processFiles()" id="processBtn" disabled>
+                🔄 Processa File
+            </button>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Elaborazione in corso...</p>
+        </div>
+        
+        <div class="results-section" id="resultsSection">
+            <h3>📈 Anteprima Risultati</h3>
+            <div class="alert alert-info">
+                <strong>💡 Editing Rapido:</strong> 
+                <ul style="margin: 8px 0 0 20px; text-align: left;">
+                    <li>✏️ <strong>Click</strong> sui campi evidenziati per modificarli</li>
+                    <li>⌨️ <strong>Invio</strong> per salvare, <strong>Esc</strong> per annullare</li>
+                    <li>📋 <strong>Certificati</strong> e 🌐 <strong>Competenze</strong> hanno menu a tendina</li>
+                </ul>
+            </div>
+            <div id="previewContainer"></div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn btn-primary" onclick="exportToExcel()" id="exportBtn">
+                    💾 Scarica File Excel
+                </button>
+                <button class="btn btn-email" onclick="sendEmail()" id="emailBtn">
+                    📧 Invia via Email
+                </button>
+                <button class="btn btn-warning" onclick="resetAll()">
+                    🔄 Ricomincia
+                </button>
+            </div>
+        </div>
+        
+        <div class="email-info">
+            <strong>📧 Indirizzo per la restituzione:</strong> prove.didattica@pudduprato.edu.it
+        </div>
+    </div>
+
+    <script>
+        let currentDiscipline = 'italiano';
+        let fileData1 = null;
+        let fileData2 = null;
+        let processedData = null;
+        let resultFileName = '';
+        
+        function selectDiscipline(discipline) {
+            currentDiscipline = discipline;
+            
+            // Aggiorna i pulsanti
+            document.querySelectorAll('.discipline-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`.discipline-btn.${discipline}`).classList.add('active');
+            
+            // Reset dei file quando si cambia disciplina
+            resetFiles();
+        }
+        
+        function resetFiles() {
+            fileData1 = null;
+            fileData2 = null;
+            document.getElementById('file1').value = '';
+            document.getElementById('file2').value = '';
+            document.getElementById('file1-status').innerHTML = '';
+            document.getElementById('file2-status').innerHTML = '';
+            document.getElementById('processBtn').disabled = true;
+            document.getElementById('resultsSection').style.display = 'none';
+        }
+        
+        async function handleFileUpload(fileNumber) {
+            const fileInput = document.getElementById(`file${fileNumber}`);
+            const statusDiv = document.getElementById(`file${fileNumber}-status`);
+            const file = fileInput.files[0];
+            
+            if (!file) return;
+            
+            try {
+                statusDiv.innerHTML = '<span style="color: #ffc107;">⏳ Caricamento...</span>';
+                
+                let data;
+                if (file.name.toLowerCase().endsWith('.csv')) {
+                    const text = await file.text();
+                    const parsed = Papa.parse(text, { 
+                        header: false, // Cambiato a false per avere controllo completo
+                        skipEmptyLines: true,
+                        dynamicTyping: false // Mantieni tutto come stringa per evitare problemi
+                    });
+                    data = parsed.data;
+                } else {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    data = XLSX.utils.sheet_to_json(firstSheet, { 
+                        header: 1, // Array di array invece di oggetti
+                        defval: '',
+                        raw: false // Converti tutto in stringhe
+                    });
+                }
+                
+                if (fileNumber === 1) {
+                    fileData1 = data;
+                    console.log('File 1 caricato:', data.length, 'righe');
+                    console.log('Preview:', data.slice(0, 3));
+                } else {
+                    fileData2 = data;
+                    console.log('File 2 caricato:', data.length, 'righe');
+                    console.log('Preview:', data.slice(0, 5));
+                }
+                
+                statusDiv.innerHTML = `<span style="color: #28a745;">✅ Caricato: ${file.name} (${data.length} righe)</span>`;
+                
+                // Abilita il pulsante di elaborazione se entrambi i file sono caricati
+                if (fileData1 && fileData2) {
+                    document.getElementById('processBtn').disabled = false;
+                }
+                
+            } catch (error) {
+                statusDiv.innerHTML = '<span style="color: #dc3545;">❌ Errore nel caricamento</span>';
+                console.error('Errore caricamento file:', error);
+            }
+        }
+        
+        function processFiles() {
+            if (!fileData1 || !fileData2) {
+                alert('Carica entrambi i file prima di procedere');
+                return;
+            }
+            
+            const sezione = document.getElementById('sezione').value;
+            const anno = document.getElementById('anno').value;
+            const classe = document.getElementById('classe').value;
+            const prova = document.getElementById('prova').value;
+            
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('processBtn').disabled = true;
+            
+            setTimeout(() => {
+                try {
+                    const result = processData(fileData1, fileData2, anno, sezione, classe, prova);
+                    if (result && result.length > 0) {
+                        processedData = result;
+                        displayResults(result);
+                        document.getElementById('resultsSection').style.display = 'block';
+                        
+                        // Genera il nome del file
+                        const disciplinaCode = currentDiscipline === 'italiano' ? 'ITA' : 'MAT';
+                        resultFileName = `Prove_Parallele_${disciplinaCode}_${classe}${sezione}_${anno.replace('/', '')}.xlsx`;
+                    } else {
+                        alert('Nessun dato trovato per la sezione selezionata');
+                    }
+                } catch (error) {
+                    alert('Errore durante l\'elaborazione: ' + error.message);
+                    console.error('Errore elaborazione:', error);
+                } finally {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('processBtn').disabled = false;
+                }
+            }, 100);
+        }
+        
+        function processData(risposte, corrette, anno, sezione, classe, prova) {
+            const results = [];
+            
+            // Converte i dati in formato array se necessario
+            let risposteArray = Array.isArray(risposte) ? risposte : Object.values(risposte);
+            let corretteArray = Array.isArray(corrette) ? corrette : Object.values(corrette);
+            
+            if (risposteArray.length === 0 || corretteArray.length === 0) {
+                throw new Error('Dati dei file non validi');
+            }
+            
+            // Se il primo file ha headers (oggetti), trasforma in array
+            if (typeof risposteArray[0] === 'object' && risposteArray[0] !== null) {
+                const headers = Object.keys(risposteArray[0]);
+                const dataRows = risposteArray.map(row => headers.map(header => row[header] || ''));
+                risposteArray = [headers, ...dataRows];
+            }
+            
+            console.log('Processamento dati:', {
+                studenti: risposteArray.length - 1,
+                domande: corretteArray.length - 1,
+                sezioneTarget: sezione
+            });
+            
+            // Processa ogni studente (saltando l'header, riga 0)
+            for (let studentIndex = 1; studentIndex < risposteArray.length; studentIndex++) {
+                const studentRow = risposteArray[studentIndex];
+                
+                // Struttura del file Google Forms:
+                // [0] = Timestamp, [1] = Email, [2] = Punteggio, [3] = Sezione, [4] = Nome, [5+] = Risposte
+                const studentSezione = studentRow[3] ? studentRow[3].toString().trim() : '';
+                const nomeCompleto = studentRow[4] ? studentRow[4].toString().trim() : '';
+                const email = studentRow[1] ? studentRow[1].toString().trim() : '';
+                
+                // Filtra per sezione
+                if (studentSezione.toLowerCase() !== sezione.toLowerCase()) {
+                    continue;
+                }
+                
+                if (!nomeCompleto) {
+                    continue; // Salta righe vuote
+                }
+                
+                const scores = {};
+                
+                // Elabora ogni domanda (saltando l'header delle corrette, riga 0)
+                for (let qIndex = 1; qIndex < corretteArray.length; qIndex++) {
+                    const questionData = corretteArray[qIndex];
+                    if (questionData && Array.isArray(questionData) && questionData.length >= 2) {
+                        const questionId = questionData[0];
+                        const correctAnswer = questionData[1];
+                        const studentAnswer = studentRow[4 + qIndex]; // 4 + qIndex perché le risposte iniziano dalla colonna 5
+                        
+                        scores[questionId] = (studentAnswer === correctAnswer) ? 1 : 0;
+                    }
+                }
+                
+                // Calcola i punteggi per categoria
+                const categoryScores = calculateScores(scores, currentDiscipline);
+                
+                // Parse nome e cognome
+                const [nome, cognome] = parseNomeCognome(nomeCompleto);
+                
+                const result = {
+                    Cognome: cognome,
+                    Nome: nome,
+                    'Cert.': '',
+                    'Comp.Ling.': '',
+                    ...categoryScores,
+                    email: email,
+                    sezione: studentSezione
+                };
+                
+                results.push(result);
+            }
+            
+            console.log('Risultati processati:', results.length);
+            return results;
+        }
+        
+        function transpose(matrix) {
+            if (!matrix || matrix.length === 0) return [];
+            const rows = matrix.length;
+            const cols = matrix[0].length;
+            const result = [];
+            
+            for (let j = 0; j < cols; j++) {
+                result[j] = [];
+                for (let i = 0; i < rows; i++) {
+                    result[j][i] = matrix[i][j];
+                }
+            }
+            return result;
+        }
+        
+        function calculateScores(temp, disciplina) {
+            const scores = {};
+            
+            if (disciplina === 'italiano') {
+                let C = 0, G = 0, L = 0, I = 0;
+                let CT = 0, GT = 0, LT = 0, IT = 0;
+                
+                for (const [chiave, valore] of Object.entries(temp)) {
+                    const key = chiave.toLowerCase();
+                    if (key.startsWith('c')) {
+                        C += valore;
+                        CT++;
+                    } else if (key.startsWith('g')) {
+                        G += valore;
+                        GT++;
+                    } else if (key.startsWith('l')) {
+                        L += valore;
+                        LT++;
+                    } else if (key.startsWith('i')) {
+                        I += valore;
+                        IT++;
+                    }
+                }
+                
+                scores.Comprensione = CT > 0 ? Math.round((C / CT) * 100 * 100) / 100 : 0;
+                scores.Inferenze = IT > 0 ? Math.round((I / IT) * 100 * 100) / 100 : 0;
+                scores.Lessico = LT > 0 ? Math.round((L / LT) * 100 * 100) / 100 : 0;
+                scores.Grammatica = GT > 0 ? Math.round((G / GT) * 100 * 100) / 100 : 0;
+                
+            } else if (disciplina === 'matematica') {
+                let N = 0, F = 0, D = 0, R = 0;
+                let NT = 0, FT = 0, DT = 0, RT = 0;
+                
+                for (const [chiave, valore] of Object.entries(temp)) {
+                    const key = chiave.toLowerCase();
+                    if (key.startsWith('n')) {
+                        N += valore;
+                        NT++;
+                    } else if (key.startsWith('f')) {
+                        F += valore;
+                        FT++;
+                    } else if (key.startsWith('d')) {
+                        D += valore;
+                        DT++;
+                    } else if (key.startsWith('r')) {
+                        R += valore;
+                        RT++;
+                    }
+                }
+                
+                scores.Numeri = NT > 0 ? Math.round((N / NT) * 100 * 100) / 100 : 0;
+                scores['Spazio e Figure'] = FT > 0 ? Math.round((F / FT) * 100 * 100) / 100 : 0;
+                scores['Dati e Previsioni'] = DT > 0 ? Math.round((D / DT) * 100 * 100) / 100 : 0;
+                scores['Relazioni e Funzioni'] = RT > 0 ? Math.round((R / RT) * 100 * 100) / 100 : 0;
+            }
+            
+            return scores;
+        }
+        
+        function parseNomeCognome(nomeCompleto) {
+            if (!nomeCompleto) return ['', ''];
+            const parts = nomeCompleto.toString().split(' ');
+            if (parts.length > 1) {
+                const nome = parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase();
+                const cognome = parts.slice(1).join(' ').charAt(0).toUpperCase() + parts.slice(1).join(' ').slice(1).toLowerCase();
+                return [nome, cognome];
+            } else {
+                const nome = parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase();
+                return [nome, ''];
+            }
+        }
+        
+        function displayResults(data) {
+            const container = document.getElementById('previewContainer');
+            
+            if (data.length === 0) {
+                container.innerHTML = '<p>Nessun risultato da visualizzare</p>';
+                return;
+            }
+            
+            // Crea la tabella
+            const table = document.createElement('table');
+            table.className = 'preview-table';
+            
+            // Header
+            const headers = Object.keys(data[0]).filter(key => key !== 'email' && key !== 'sezione');
+            const headerRow = document.createElement('tr');
+            headers.forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                headerRow.appendChild(th);
+            });
+            table.appendChild(headerRow);
+            
+            // Dati con celle editabili
+            data.forEach((row, rowIndex) => {
+                const tr = document.createElement('tr');
+                headers.forEach((header, colIndex) => {
+                    const td = document.createElement('td');
+                    
+                    // Campi editabili
+                    if (header === 'Cognome' || header === 'Nome') {
+                        td.className = 'editable-cell';
+                        td.innerHTML = `
+                            <div class="edit-icons">✏️</div>
+                            <div class="cell-content">${row[header] || ''}</div>
+                            <div class="editable-hint">Clicca per modificare</div>
+                        `;
+                        td.onclick = () => editTextField(td, rowIndex, header);
+                    } else if (header === 'Cert.') {
+                        td.className = 'editable-cell';
+                        td.innerHTML = `
+                            <div class="edit-icons">📋</div>
+                            <div class="cell-content">${row[header] || '-'}</div>
+                            <div class="editable-hint">Clicca per selezionare</div>
+                        `;
+                        td.onclick = () => editSelectField(td, rowIndex, header, 'cert');
+                    } else if (header === 'Comp.Ling.') {
+                        td.className = 'editable-cell';
+                        td.innerHTML = `
+                            <div class="edit-icons">🌐</div>
+                            <div class="cell-content">${row[header] || '-'}</div>
+                            <div class="editable-hint">Clicca per selezionare</div>
+                        `;
+                        td.onclick = () => editSelectField(td, rowIndex, header, 'comp');
+                    } else {
+                        // Campi non editabili (punteggi)
+                        td.textContent = row[header] || '';
+                    }
+                    
+                    tr.appendChild(td);
+                });
+                table.appendChild(tr);
+            });
+            
+            container.innerHTML = '';
+            container.appendChild(table);
+        }
+        
+        function editTextField(cell, rowIndex, fieldName) {
+            // Evita doppio editing
+            if (cell.classList.contains('editing')) return;
+            
+            cell.classList.add('editing');
+            const contentDiv = cell.querySelector('.cell-content');
+            const currentValue = contentDiv.textContent;
+            
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentValue;
+            input.className = 'edit-input';
+            input.placeholder = fieldName === 'Cognome' ? 'Inserisci cognome' : 'Inserisci nome';
+            
+            // Sostituisci il contenuto
+            cell.innerHTML = '';
+            cell.appendChild(input);
+            
+            // Focus e selezione
+            input.focus();
+            input.select();
+            
+            // Funzione per salvare
+            const saveValue = () => {
+                const newValue = input.value.trim();
+                
+                // Aggiorna i dati
+                if (processedData[rowIndex]) {
+                    processedData[rowIndex][fieldName] = newValue;
+                }
+                
+                // Ripristina la cella
+                cell.classList.remove('editing');
+                cell.innerHTML = `
+                    <div class="edit-icons">✏️</div>
+                    <div class="cell-content">${newValue}</div>
+                    <div class="editable-hint">Clicca per modificare</div>
+                `;
+                cell.onclick = () => editTextField(cell, rowIndex, fieldName);
+            };
+            
+            // Event listeners
+            input.onblur = saveValue;
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    saveValue();
+                } else if (e.key === 'Escape') {
+                    // Annulla editing
+                    cell.classList.remove('editing');
+                    cell.innerHTML = `
+                        <div class="edit-icons">✏️</div>
+                        <div class="cell-content">${currentValue}</div>
+                        <div class="editable-hint">Clicca per modificare</div>
+                    `;
+                    cell.onclick = () => editTextField(cell, rowIndex, fieldName);
+                }
+            };
+        }
+        
+        function editSelectField(cell, rowIndex, fieldName, type) {
+            // Evita doppio editing
+            if (cell.classList.contains('editing')) return;
+            
+            cell.classList.add('editing');
+            const contentDiv = cell.querySelector('.cell-content');
+            const currentValue = contentDiv.textContent === '-' ? '' : contentDiv.textContent;
+            
+            const select = document.createElement('select');
+            select.className = 'edit-select';
+            
+            let options = [];
+            if (type === 'cert') {
+                options = [
+                    { value: '', label: '-' },
+                    { value: 'no', label: 'no' },
+                    { value: 'L. 170 (D.S.A.)', label: 'L. 170 (D.S.A.)' },
+                    { value: 'L. 104 (H)', label: 'L. 104 (H)' },
+                    { value: 'B.E.S.', label: 'B.E.S.' }
+                ];
+            } else if (type === 'comp') {
+                options = [
+                    { value: '', label: '-' },
+                    { value: 'Italofono', label: 'Italofono' },
+                    { value: 'Livello A', label: 'Livello A' },
+                    { value: 'Livello B', label: 'Livello B' },
+                    { value: 'Livello Iniziale', label: 'Livello Iniziale' }
+                ];
+            }
+            
+            options.forEach(option => {
+                const opt = document.createElement('option');
+                opt.value = option.value;
+                opt.textContent = option.label;
+                if (option.value === currentValue) {
+                    opt.selected = true;
+                }
+                select.appendChild(opt);
+            });
+            
+            // Sostituisci il contenuto
+            cell.innerHTML = '';
+            cell.appendChild(select);
+            
+            // Focus
+            select.focus();
+            
+            // Funzione per salvare
+            const saveValue = () => {
+                const newValue = select.value;
+                const displayValue = newValue || '-';
+                
+                // Aggiorna i dati
+                if (processedData[rowIndex]) {
+                    processedData[rowIndex][fieldName] = newValue;
+                }
+                
+                // Ripristina la cella
+                cell.classList.remove('editing');
+                const icon = type === 'cert' ? '📋' : '🌐';
+                cell.innerHTML = `
+                    <div class="edit-icons">${icon}</div>
+                    <div class="cell-content">${displayValue}</div>
+                    <div class="editable-hint">Clicca per selezionare</div>
+                `;
+                cell.onclick = () => editSelectField(cell, rowIndex, fieldName, type);
+            };
+            
+            // Event listeners
+            select.onchange = saveValue;
+            select.onblur = saveValue;
+            select.onkeydown = (e) => {
+                if (e.key === 'Escape') {
+                    // Annulla editing
+                    cell.classList.remove('editing');
+                    const icon = type === 'cert' ? '📋' : '🌐';
+                    const displayValue = currentValue || '-';
+                    cell.innerHTML = `
+                        <div class="edit-icons">${icon}</div>
+                        <div class="cell-content">${displayValue}</div>
+                        <div class="editable-hint">Clicca per selezionare</div>
+                    `;
+                    cell.onclick = () => editSelectField(cell, rowIndex, fieldName, type);
+                }
+            };
+        }
+        
+        function exportToExcel() {
+            if (!processedData) {
+                alert('Nessun dato da esportare');
+                return;
+            }
+            
+            const workbook = XLSX.utils.book_new();
+            
+            // Foglio Input
+            const inputData = createInputSheet();
+            const inputWorksheet = XLSX.utils.aoa_to_sheet(inputData);
+            XLSX.utils.book_append_sheet(workbook, inputWorksheet, "Input");
+            
+            // Foglio Tabelle
+            const tabelleData = createTabelleSheet();
+            const tabelleWorksheet = XLSX.utils.aoa_to_sheet(tabelleData);
+            XLSX.utils.book_append_sheet(workbook, tabelleWorksheet, "Tabelle");
+            
+            // Scarica il file
+            XLSX.writeFile(workbook, resultFileName);
+        }
+        
+        function createInputSheet() {
+            const anno = document.getElementById('anno').value;
+            const classe = document.getElementById('classe').value;
+            const sezione = document.getElementById('sezione').value;
+            const prova = document.getElementById('prova').value;
+            
+            const data = [];
+            
+            // Header principale
+            const headerRow1 = [
+                'A.S.',
+                anno,
+                'SCUOLA:',
+                'Secondaria I grado "Don Bosco"',
+                'Tabulazione prove parallele IC Puddu',
+                '',
+                'PROVA:',
+                prova,
+                'DISCIPLINA:',
+                currentDiscipline.charAt(0).toUpperCase() + currentDiscipline.slice(1)
+            ];
+            
+            // Header colonne
+            const headerRow2 = [
+                'CLASSE:',
+                'SEZIONE:',
+                'COGNOME',
+                'NOME',
+                'CERTIFICATI',
+                'COMPETENZE LINGUISTICHE'
+            ];
+            
+            // Aggiungi header specifici per disciplina
+            if (currentDiscipline === 'italiano') {
+                headerRow2.push('AMBITO 1', 'AMBITO 2', 'AMBITO 3', 'AMBITO 4');
+            } else {
+                headerRow2.push('AMBITO 1', 'AMBITO 2', 'AMBITO 3', 'AMBITO 4');
+            }
+            headerRow2.push('MEDIA', 'NOTE');
+            
+            // Header descrizioni ambiti
+            const headerRow3 = ['', '', '', '', '', ''];
+            if (currentDiscipline === 'italiano') {
+                headerRow3.push('Comprensione', 'Inferenze', 'Lessico', 'Grammatica');
+            } else {
+                headerRow3.push('Numeri', 'Spazio e Figure', 'Dati e Previsioni', 'Relazioni e Funzioni');
+            }
+            headerRow3.push('', '');
+            
+            data.push(headerRow1);
+            data.push(headerRow2);
+            data.push(headerRow3);
+            
+            // Dati studenti
+            processedData.forEach(student => {
+                const studentRow = [
+                    classe,
+                    sezione,
+                    student.Cognome || '',
+                    student.Nome || '',
+                    student['Cert.'] || '',
+                    student['Comp.Ling.'] || ''
+                ];
+                
+                // Aggiungi punteggi specifici per disciplina
+                if (currentDiscipline === 'italiano') {
+                    studentRow.push(
+                        student.Comprensione || '',
+                        student.Inferenze || '',
+                        student.Lessico || '',
+                        student.Grammatica || ''
+                    );
+                } else {
+                    studentRow.push(
+                        student.Numeri || '',
+                        student['Spazio e Figure'] || '',
+                        student['Dati e Previsioni'] || '',
+                        student['Relazioni e Funzioni'] || ''
+                    );
+                }
+                
+                // Calcola media
+                const scores = [];
+                if (currentDiscipline === 'italiano') {
+                    if (student.Comprensione) scores.push(parseFloat(student.Comprensione));
+                    if (student.Inferenze) scores.push(parseFloat(student.Inferenze));
+                    if (student.Lessico) scores.push(parseFloat(student.Lessico));
+                    if (student.Grammatica) scores.push(parseFloat(student.Grammatica));
+                } else {
+                    if (student.Numeri) scores.push(parseFloat(student.Numeri));
+                    if (student['Spazio e Figure']) scores.push(parseFloat(student['Spazio e Figure']));
+                    if (student['Dati e Previsioni']) scores.push(parseFloat(student['Dati e Previsioni']));
+                    if (student['Relazioni e Funzioni']) scores.push(parseFloat(student['Relazioni e Funzioni']));
+                }
+                
+                const media = scores.length > 0 ? 
+                    Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 100) / 100 : '';
+                
+                studentRow.push(media, ''); // Media e Note
+                data.push(studentRow);
+            });
+            
+            return data;
+        }
+        
+        function createTabelleSheet() {
+            const anno = document.getElementById('anno').value;
+            const classe = document.getElementById('classe').value;
+            const sezione = document.getElementById('sezione').value;
+            const prova = document.getElementById('prova').value;
+            const disciplina = currentDiscipline.charAt(0).toUpperCase() + currentDiscipline.slice(1);
+            
+            // Header del foglio Tabelle (seguendo la struttura del file Excel fornito)
+            const headers = [
+                'ID', 'Classe', 'Sezione', 'Anno', 'Plesso', 'Disciplina', 'Tipo_prova',
+                'Cognome', 'Nome', 'BES', 'Livello_Linguistico',
+                'A1_Nome', 'A1_Punteggi', 'A2_Nome', 'A2_Punteggi',
+                'A3_Nome', 'A3_Punteggi', 'A4_Nome', 'A4_Punteggi',
+                'MEDIA'
+            ];
+            
+            const tabelleData = [headers];
+            
+            // Determina i nomi degli ambiti
+            let ambitiNomi = ['', '', '', ''];
+            if (currentDiscipline === 'italiano') {
+                ambitiNomi = ['Comprensione', 'Inferenze', 'Lessico', 'Grammatica'];
+            } else {
+                ambitiNomi = ['Numeri', 'Spazio e Figure', 'Dati e Previsioni', 'Relazioni e Funzioni'];
+            }
+            
+            // Dati studenti
+            processedData.forEach((student, index) => {
+                // Calcola media
+                const scores = [];
+                let ambiti = ['', '', '', ''];
+                
+                if (currentDiscipline === 'italiano') {
+                    if (student.Comprensione) { scores.push(parseFloat(student.Comprensione)); ambiti[0] = student.Comprensione; }
+                    if (student.Inferenze) { scores.push(parseFloat(student.Inferenze)); ambiti[1] = student.Inferenze; }
+                    if (student.Lessico) { scores.push(parseFloat(student.Lessico)); ambiti[2] = student.Lessico; }
+                    if (student.Grammatica) { scores.push(parseFloat(student.Grammatica)); ambiti[3] = student.Grammatica; }
+                } else {
+                    if (student.Numeri) { scores.push(parseFloat(student.Numeri)); ambiti[0] = student.Numeri; }
+                    if (student['Spazio e Figure']) { scores.push(parseFloat(student['Spazio e Figure'])); ambiti[1] = student['Spazio e Figure']; }
+                    if (student['Dati e Previsioni']) { scores.push(parseFloat(student['Dati e Previsioni'])); ambiti[2] = student['Dati e Previsioni']; }
+                    if (student['Relazioni e Funzioni']) { scores.push(parseFloat(student['Relazioni e Funzioni'])); ambiti[3] = student['Relazioni e Funzioni']; }
+                }
+                
+                const media = scores.length > 0 ? 
+                    Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 100) / 100 : '';
+                
+                const studentRow = [
+                    index + 1,                                    // ID
+                    classe,                                       // Classe
+                    sezione,                                      // Sezione
+                    anno,                                         // Anno
+                    'Secondaria I grado "Don Bosco"',            // Plesso
+                    disciplina,                                   // Disciplina
+                    prova,                                        // Tipo_prova
+                    student.Cognome || '',                        // Cognome
+                    student.Nome || '',                           // Nome
+                    student['Cert.'] || '',                       // BES
+                    student['Comp.Ling.'] || '',                  // Livello_Linguistico
+                    ambitiNomi[0],                               // A1_Nome
+                    ambiti[0],                                   // A1_Punteggi
+                    ambitiNomi[1],                               // A2_Nome
+                    ambiti[1],                                   // A2_Punteggi
+                    ambitiNomi[2],                               // A3_Nome
+                    ambiti[2],                                   // A3_Punteggi
+                    ambitiNomi[3],                               // A4_Nome
+                    ambiti[3],                                   // A4_Punteggi
+                    media                                        // MEDIA
+                ];
+                
+                tabelleData.push(studentRow);
+            });
+            
+            return tabelleData;
+        }
+        
+        function sendEmail() {
+            if (!processedData || !resultFileName) {
+                alert('Elabora prima i dati per poter inviare l\'email');
+                return;
+            }
+            
+            // Prima scarica automaticamente il file Excel
+            exportToExcel();
+            
+            // Prepara i dati per l'email
+            const anno = document.getElementById('anno').value;
+            const classe = document.getElementById('classe').value;
+            const sezione = document.getElementById('sezione').value;
+            const prova = document.getElementById('prova').value;
+            const disciplina = currentDiscipline.charAt(0).toUpperCase() + currentDiscipline.slice(1);
+            
+            const subject = `Tabulazione prove parallele IC Puddu - ${disciplina} ${prova} - Classe ${classe}${sezione} - A.S. ${anno}`;
+            const body = `Gentile gruppo prove parallele,
+
+in allegato i dati della valutazione ${prova.toLowerCase()} di ${disciplina} per la classe ${classe}${sezione} dell'anno scolastico ${anno}.
+
+Scuola: Secondaria I grado "Don Bosco"
+Disciplina: ${disciplina}
+Tipo di prova: ${prova}
+Studenti elaborati: ${processedData.length}
+
+📎 IMPORTANTE: Il file Excel è stato scaricato automaticamente nella cartella Downloads del tuo computer.
+📁 Nome file: ${resultFileName}
+🔗 Ricordati di allegarlo a questa email prima di inviarla.
+
+Cordiali saluti`;
+            
+            // Aspetta un momento per permettere il download, poi apri Gmail
+            setTimeout(() => {
+                // Prova prima Gmail direttamente
+                const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=prove.didattica@pudduprato.edu.it&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                
+                // Apri Gmail in una nuova finestra/tab
+                const gmailWindow = window.open(gmailUrl, '_blank');
+                
+                // Se Gmail non si apre (popup bloccato), usa il fallback mailto
+                if (!gmailWindow) {
+                    alert('Popup bloccato! Apertura tramite client email locale...\n\nATTENZIONE: Il file Excel è stato scaricato. Ricordati di allegarlo all\'email!');
+                    const mailtoLink = `mailto:prove.didattica@pudduprato.edu.it?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                    window.open(mailtoLink);
+                }
+            }, 1500); // Aspetta 1.5 secondi per il download
+        }
+        
+        function resetAll() {
+            if (confirm('Sei sicuro di voler ricominciare? Tutti i dati elaborati verranno persi.')) {
+                // Reset tutti i campi
+                fileData1 = null;
+                fileData2 = null;
+                processedData = null;
+                resultFileName = '';
+                
+                // Reset form
+                document.getElementById('file1').value = '';
+                document.getElementById('file2').value = '';
+                document.getElementById('file1-status').innerHTML = '';
+                document.getElementById('file2-status').innerHTML = '';
+                
+                // Reset UI
+                document.getElementById('processBtn').disabled = true;
+                document.getElementById('resultsSection').style.display = 'none';
+                document.getElementById('loading').style.display = 'none';
+                
+                // Reset disciplina a italiano
+                selectDiscipline('italiano');
+            }
+        }
+        
+        // Inizializzazione con drag & drop
+        document.addEventListener('DOMContentLoaded', function() {
+            // Imposta disciplina di default
+            selectDiscipline('italiano');
+            
+            // Setup drag & drop
+            setupDragAndDrop();
+        });
+        
+        function setupDragAndDrop() {
+            const dropZones = [
+                { zone: document.getElementById('dropZone1'), fileNum: 1 },
+                { zone: document.getElementById('dropZone2'), fileNum: 2 }
+            ];
+            
+            dropZones.forEach(({ zone, fileNum }) => {
+                if (!zone) return;
+                
+                // Previeni il comportamento di default del browser
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    zone.addEventListener(eventName, preventDefaults, false);
+                    document.body.addEventListener(eventName, preventDefaults, false);
+                });
+                
+                // Highlight della drop zone
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    zone.addEventListener(eventName, () => highlight(zone), false);
+                });
+                
+                ['dragleave', 'drop'].forEach(eventName => {
+                    zone.addEventListener(eventName, () => unhighlight(zone), false);
+                });
+                
+                // Gestione del drop
+                zone.addEventListener('drop', (e) => handleDrop(e, fileNum), false);
+            });
+        }
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        function highlight(zone) {
+            zone.classList.add('drag-over');
+        }
+        
+        function unhighlight(zone) {
+            zone.classList.remove('drag-over');
+        }
+        
+        function handleDrop(e, fileNumber) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length > 0) {
+                const file = files[0];
+                
+                // Verifica tipo file
+                const validTypes = ['.csv', '.xlsx', '.xls'];
+                const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+                
+                if (!validTypes.includes(fileExtension)) {
+                    alert('Tipo di file non supportato. Carica file CSV o Excel.');
+                    return;
+                }
+                
+                // Simula la selezione del file
+                const fileInput = document.getElementById(`file${fileNumber}`);
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileInput.files = dataTransfer.files;
+                
+                // Processa il file
+                handleFileUpload(fileNumber);
+            }
+        }
+    </script>
+</body>
+</html>
