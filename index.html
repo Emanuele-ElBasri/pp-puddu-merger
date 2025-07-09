@@ -421,7 +421,7 @@
         
         <div class="discipline-selector">
             <button class="discipline-btn italiano active" onclick="selectDiscipline('italiano')">
-                📚 ITALIANO
+                📕 ITALIANO
             </button>
             <button class="discipline-btn matematica" onclick="selectDiscipline('matematica')">
                 🔢 MATEMATICA
@@ -429,7 +429,7 @@
         </div>
         
         <div class="form-section">
-            <h3>📋 Informazioni Generali</h3>
+            <h3>ⓘ Informazioni Generali</h3>
             <div class="form-grid">
                 <div class="form-group">
                     <label for="anno">Anno Scolastico:</label>
@@ -482,7 +482,7 @@
             
             <div class="file-upload-grid">
                 <div class="file-upload-item" id="dropZone1">
-                    <h3>📊 File Risposte Studenti</h3>
+                    <h3>📝 File Risposte Studenti</h3>
                     <p>File CSV/Excel con le risposte date dagli studenti</p>
                     <div class="drop-zone" onclick="document.getElementById('file1').click()">
                         <div>📁 Clicca per selezionare</div>
@@ -517,13 +517,13 @@
         </div>
         
         <div class="results-section" id="resultsSection">
-            <h3>📈 Anteprima Risultati</h3>
+            <h3>🔎 Anteprima tabulazione</h3>
             <div class="alert alert-info">
                 <strong>💡 Editing Rapido:</strong> 
                 <ul style="margin: 8px 0 0 20px; text-align: left;">
                     <li>✏️ <strong>Click</strong> sui campi evidenziati per modificarli</li>
-                    <li>⌨️ <strong>Invio</strong> per salvare, <strong>Esc</strong> per annullare</li>
-                    <li>📋 <strong>Certificati</strong> e 🌐 <strong>Competenze</strong> hanno menu a tendina</li>
+                    <li><strong>Invio</strong> per salvare, <strong>Esc</strong> per annullare</li>
+                    <li><strong>Certificati</strong> e <strong>Competenze</strong> hanno menu a tendina</li>
                 </ul>
             </div>
             <div id="previewContainer"></div>
@@ -536,13 +536,17 @@
                     📧 Invia via Email
                 </button>
                 <button class="btn btn-warning" onclick="resetAll()">
-                    🔄 Ricomincia
+                    🧹 Ricomincia
                 </button>
             </div>
         </div>
         
         <div class="email-info">
             <strong>📧 Indirizzo per la restituzione:</strong> prove.didattica@pudduprato.edu.it
+        </div>
+        
+        <div class="dashboard-info">
+            <strong>📊 Guarda la dashboard d'Istituto</strong> <a href="https://datastudio.google.com/reporting/9f30bd14-3474-4020-acaf-831f73381a76" target="_blank">link alla dashboard</a>
         </div>
     </div>
 
@@ -1020,7 +1024,7 @@
                 
                 // Ripristina la cella
                 cell.classList.remove('editing');
-                const icon = type === 'cert' ? '📋' : '🌐';
+                const icon = type === 'cert' ? '📑' : '📑';
                 cell.innerHTML = `
                     <div class="edit-icons">${icon}</div>
                     <div class="cell-content">${displayValue}</div>
@@ -1036,7 +1040,7 @@
                 if (e.key === 'Escape') {
                     // Annulla editing
                     cell.classList.remove('editing');
-                    const icon = type === 'cert' ? '📋' : '🌐';
+                    const icon = type === 'cert' ? '📑' : '📑';
                     const displayValue = currentValue || '-';
                     cell.innerHTML = `
                         <div class="edit-icons">${icon}</div>
@@ -1283,20 +1287,15 @@ Studenti elaborati: ${processedData.length}
 
 Cordiali saluti`;
             
-            // Aspetta un momento per permettere il download, poi apri Gmail
+            // 3. Aspetta un momento per permettere il download, poi apri il client email
             setTimeout(() => {
-                // Prova prima Gmail direttamente
-                const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=prove.didattica@pudduprato.edu.it&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                const mailtoLink = `mailto:prove.didattica@pudduprato.edu.it?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
                 
-                // Apri Gmail in una nuova finestra/tab
-                const gmailWindow = window.open(gmailUrl, '_blank');
+                // Apri direttamente con il client email predefinito
+                window.location.href = mailtoLink;
                 
-                // Se Gmail non si apre (popup bloccato), usa il fallback mailto
-                if (!gmailWindow) {
-                    alert('Popup bloccato! Apertura tramite client email locale...\n\nATTENZIONE: Il file Excel è stato scaricato. Ricordati di allegarlo all\'email!');
-                    const mailtoLink = `mailto:prove.didattica@pudduprato.edu.it?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-                    window.open(mailtoLink);
-                }
+                // Messaggio informativo per l'utente
+                alert('Il file Excel è stato scaricato.\n\nSi sta aprendo il tuo client email con il messaggio preimpostato.\nRicordati di allegare il file scaricato prima di inviare!');
             }, 1500); // Aspetta 1.5 secondi per il download
         }
         
