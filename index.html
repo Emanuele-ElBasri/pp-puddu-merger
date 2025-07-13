@@ -422,10 +422,146 @@
                 grid-template-columns: 1fr;
             }
         }
+        /* Stili per il sistema di autenticazione */
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .auth-container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .auth-container h2 {
+            color: #1a49e9;
+            margin-bottom: 30px;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .auth-btn {
+            background: #1a49e9;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            min-width: 120px;
+        }
+
+        .auth-btn:hover {
+            background: #1435b8;
+        }
+
+        .auth-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .auth-message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .auth-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .auth-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .user-info {
+            background: #e8f4fd;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3c78d8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #06b640, #059d37);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(6, 182, 64, 0.4);
+        }
     </style>
 </head>
 <body>
+    <!-- Overlay di autenticazione -->
+    <div id="authOverlay" class="auth-overlay">
+        <div class="auth-container">
+            <h2>🔐 Accesso Docenti IC Puddu</h2>
+            <p>Inserisci la tua email @pudduprato.edu.it per accedere alla piattaforma</p>
+            
+            <div id="loginStep">
+                <input type="email" id="emailInput" class="auth-input" placeholder="nome.cognome@pudduprato.edu.it" />
+                <button onclick="requestVerificationCode()" class="auth-btn" id="loginBtn">Invia Codice</button>
+            </div>
+            
+            <div id="verifyStep" style="display: none;">
+                <p>Controlla la tua email e inserisci il codice ricevuto:</p>
+                <input type="text" id="codeInput" class="auth-input" placeholder="Codice a 6 cifre" maxlength="6" />
+                <button onclick="verifyCode()" class="auth-btn" id="verifyBtn">Verifica</button>
+                <button onclick="backToLogin()" class="auth-btn" style="background: #6c757d;">Indietro</button>
+            </div>
+            
+            <div id="authMessage"></div>
+        </div>
+    </div>
+
     <div class="container">
+        <!-- Barra informazioni utente -->
+        <div id="userInfo" class="user-info" style="display: none;">
+            <span>👤 Connesso come: <strong id="userEmail"></strong></span>
+            <button onclick="logout()" class="logout-btn">Esci</button>
+        </div>
         <div class="header">
             <div class="main-title">Prove Parallele IC Puddu</div>
             <div class="subtitle">Processore automatico file CSV/Excel per la scuola Secondaria "Don Bosco"</div>
@@ -544,11 +680,11 @@
             <div id="previewContainer"></div>
             
             <div style="text-align: center; margin-top: 30px;">
-                <button class="btn btn-primary" onclick="exportToExcel()" id="exportBtn">
-                    💾 Scarica File Excel
+                <button class="btn btn-primary" onclick="transmitData()" id="transmitBtn">
+                    📤 Trasmetti dati
                 </button>
-                <button class="btn btn-email" onclick="sendEmail()" id="emailBtn">
-                    📧 Invia via Email
+                <button class="btn btn-success" onclick="saveExcel()" id="saveBtn">
+                    💾 Salva Excel
                 </button>
                 <button class="btn btn-warning" onclick="resetAll()">
                     🧹 Ricomincia
@@ -572,6 +708,10 @@
         let processedData = null;
         let resultFileName = '';
         
+        // Configurazione per il sistema di autenticazione
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby8rheknwj2UQ7hTNUQh4diOau0hMGQCtHv959EnXyKunyK8bW0DhZgne0R0dWatH4LTw/exec';
+        let currentSession = null;
+
         function selectDiscipline(discipline) {
             currentDiscipline = discipline;
             
@@ -594,6 +734,118 @@
             document.getElementById('file2-status').innerHTML = '';
             document.getElementById('processBtn').disabled = true;
             document.getElementById('resultsSection').style.display = 'none';
+        }
+
+        function showLogin() {
+            document.getElementById('authOverlay').style.display = 'flex';
+            document.querySelector('.container').style.filter = 'blur(3px)';
+        }
+
+        function showMainApp() {
+            document.getElementById('authOverlay').style.display = 'none';
+            document.querySelector('.container').style.filter = 'none';
+            
+            if (currentSession) {
+                document.getElementById('userInfo').style.display = 'flex';
+                document.getElementById('userEmail').textContent = currentSession.email;
+            }
+            
+            // Imposta disciplina di default
+            selectDiscipline('italiano');
+            
+            // Setup drag & drop
+            setupDragAndDrop();
+        }
+
+        async function requestVerificationCode() {
+            const email = document.getElementById('emailInput').value.trim();
+            const loginBtn = document.getElementById('loginBtn');
+            
+            if (!email || !email.endsWith('@pudduprato.edu.it')) {
+                showAuthMessage('Usa la tua email @pudduprato.edu.it', 'error');
+                return;
+            }
+            
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Invio in corso...';
+            
+            try {
+                const response = await fetch(`${APPS_SCRIPT_URL}?action=login&email=${encodeURIComponent(email)}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAuthMessage('Codice inviato! Controlla la tua email: ' + email, 'success');
+                    document.getElementById('loginStep').style.display = 'none';
+                    document.getElementById('verifyStep').style.display = 'block';
+                } else {
+                    showAuthMessage(result.message || 'Errore sconosciuto', 'error');
+                }
+            } catch (error) {
+                showAuthMessage('Errore di connessione: ' + error.message, 'error');
+            }
+            
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Invia Codice';
+        }
+
+        async function verifyCode() {
+            const email = document.getElementById('emailInput').value.trim();
+            const code = document.getElementById('codeInput').value.trim();
+            const verifyBtn = document.getElementById('verifyBtn');
+            
+            if (!code || code.length !== 6) {
+                showAuthMessage('Inserisci il codice a 6 cifre', 'error');
+                return;
+            }
+            
+            verifyBtn.disabled = true;
+            verifyBtn.textContent = 'Verifica...';
+            
+            try {
+                const response = await fetch(`${APPS_SCRIPT_URL}?action=verify&email=${encodeURIComponent(email)}&code=${encodeURIComponent(code)}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentSession = result.data;
+                    
+                    try {
+                        localStorage.setItem('icPudduSession', JSON.stringify(currentSession));
+                    } catch (e) {
+                        console.error('Errore salvando in localStorage:', e);
+                    }
+                    
+                    showAuthMessage('Accesso autorizzato!', 'success');
+                    setTimeout(() => {
+                        showMainApp();
+                    }, 1000);
+                } else {
+                    showAuthMessage(result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Errore nella verifica:', error);
+                showAuthMessage('Errore di connessione. Riprova.', 'error');
+            }
+            
+            verifyBtn.disabled = false;
+            verifyBtn.textContent = 'Verifica';
+        }
+
+        function backToLogin() {
+            document.getElementById('loginStep').style.display = 'block';
+            document.getElementById('verifyStep').style.display = 'none';
+            document.getElementById('codeInput').value = '';
+            document.getElementById('authMessage').innerHTML = '';
+        }
+
+        function showAuthMessage(message, type) {
+            const messageDiv = document.getElementById('authMessage');
+            messageDiv.innerHTML = `<div class="auth-message auth-${type}">${message}</div>`;
+        }
+
+        function logout() {
+            localStorage.removeItem('icPudduSession');
+            currentSession = null;
+            location.reload();
         }
         
         async function handleFileUpload(fileNumber) {
@@ -1270,48 +1522,125 @@
             return tabelleData;
         }
         
-        function sendEmail() {
-            if (!processedData || !resultFileName) {
-                alert('Elabora prima i dati per poter inviare l\'email');
+        async function transmitData() {
+            if (!currentSession) {
+                alert('Sessione scaduta. Effettua di nuovo il login.');
+                logout();
                 return;
             }
             
-            // Prima scarica automaticamente il file Excel
+            if (!processedData || processedData.length === 0) {
+                alert('Non ci sono dati da trasmettere. Elabora prima i file.');
+                return;
+            }
+            
+            const transmitBtn = document.getElementById('transmitBtn');
+            const originalText = transmitBtn.textContent;
+            transmitBtn.disabled = true;
+            transmitBtn.textContent = 'Trasmissione...';
+            
+            try {
+                const tabulationData = generateTabulationData();
+                
+                const payload = {
+                    action: 'saveData',
+                    token: currentSession.token,
+                    data: tabulationData
+                };
+                
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const responseText = await response.text();
+                
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                } catch (e) {
+                    result = { success: false, message: 'Errore nella risposta del server' };
+                }
+                
+                if (result.success) {
+                    alert('✅ Dati trasmessi con successo nel sistema centralizzato!');
+                } else {
+                    throw new Error(result.message);
+                }
+                
+            } catch (error) {
+                alert('❌ Errore nella trasmissione: ' + error.message);
+            }
+            
+            transmitBtn.disabled = false;
+            transmitBtn.textContent = originalText;
+        }
+
+        function saveExcel() {
+            if (!processedData || processedData.length === 0) {
+                alert('Non ci sono dati da salvare. Elabora prima i file.');
+                return;
+            }
+            
             exportToExcel();
+            alert('📁 File Excel salvato con successo!');
+        }
+
+        function generateTabulationData() {
+            return {
+                metadata: {
+                    anno: document.getElementById('anno').value,
+                    ordine: 'Secondaria I grado',
+                    plesso: 'Don Bosco',
+                    classe: document.getElementById('classe').value,
+                    sezione: document.getElementById('sezione').value,
+                    disciplina: currentDiscipline.charAt(0).toUpperCase() + currentDiscipline.slice(1),
+                    prova: document.getElementById('prova').value,
+                    timestamp: new Date().toISOString(),
+                    docente: currentSession.email
+                },
+                studenti: collectStudentData()
+            };
+        }
+
+        function collectStudentData() {
+            const studenti = [];
             
-            // Prepara i dati per l'email
-            const anno = document.getElementById('anno').value;
-            const classe = document.getElementById('classe').value;
-            const sezione = document.getElementById('sezione').value;
-            const prova = document.getElementById('prova').value;
-            const disciplina = currentDiscipline.charAt(0).toUpperCase() + currentDiscipline.slice(1);
-            
-            const subject = `Tabulazione prove parallele IC Puddu - ${disciplina} ${prova} - Classe ${classe}${sezione} - A.S. ${anno}`;
-            const body = `Gentile gruppo prove parallele,
-
-in allegato i dati della valutazione ${prova.toLowerCase()} di ${disciplina} per la classe ${classe}${sezione} dell'anno scolastico ${anno}.
-
-Scuola: Secondaria I grado "Don Bosco"
-Disciplina: ${disciplina}
-Tipo di prova: ${prova}
-Studenti elaborati: ${processedData.length}
-
-📎 IMPORTANTE: Il file Excel è stato scaricato automaticamente nella cartella Downloads del tuo computer.
-📁 Nome file: ${resultFileName}
-🔗 Ricordati di allegarlo a questa email prima di inviarla.
-
-Cordiali saluti`;
-            
-            // 3. Aspetta un momento per permettere il download, poi apri il client email
-            setTimeout(() => {
-                const mailtoLink = `mailto:prove.didattica@pudduprato.edu.it?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            processedData.forEach(student => {
+                const studente = {
+                    cognome: student.Cognome || '',
+                    nome: student.Nome || '',
+                    certificati: student['Cert.'] || '',
+                    competenze: student['Comp.Ling.'] || '',
+                    note: '',
+                    punteggi: {}
+                };
                 
-                // Apri direttamente con il client email predefinito
-                window.location.href = mailtoLink;
+                // Raccogli i punteggi in base alla disciplina
+                if (currentDiscipline === 'italiano') {
+                    if (student.Comprensione) studente.punteggi.ambito1 = student.Comprensione;
+                    if (student.Inferenze) studente.punteggi.ambito2 = student.Inferenze;
+                    if (student.Lessico) studente.punteggi.ambito3 = student.Lessico;
+                    if (student.Grammatica) studente.punteggi.ambito4 = student.Grammatica;
+                } else {
+                    if (student.Numeri) studente.punteggi.ambito1 = student.Numeri;
+                    if (student['Spazio e Figure']) studente.punteggi.ambito2 = student['Spazio e Figure'];
+                    if (student['Dati e Previsioni']) studente.punteggi.ambito3 = student['Dati e Previsioni'];
+                    if (student['Relazioni e Funzioni']) studente.punteggi.ambito4 = student['Relazioni e Funzioni'];
+                }
                 
-                // Messaggio informativo per l'utente
-                alert('Il file Excel è stato scaricato.\n\nSi sta aprendo il tuo client email con il messaggio preimpostato.\nRicordati di allegare il file scaricato prima di inviare!');
-            }, 1500); // Aspetta 1.5 secondi per il download
+                // Calcola media
+                const scores = Object.values(studente.punteggi).map(p => parseFloat(p)).filter(p => !isNaN(p));
+                studente.media = scores.length > 0 ? 
+                    Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 100) / 100 : '-';
+                
+                studenti.push(studente);
+            });
+            
+            return studenti;
         }
         
         function resetAll() {
@@ -1340,11 +1669,25 @@ Cordiali saluti`;
         
         // Inizializzazione con drag & drop
         document.addEventListener('DOMContentLoaded', function() {
-            // Imposta disciplina di default
-            selectDiscipline('italiano');
+            // Controlla se c'è una sessione salvata
+            const savedSession = localStorage.getItem('icPudduSession');
+            if (savedSession) {
+                try {
+                    const session = JSON.parse(savedSession);
+                    if (session.expires > Date.now()) {
+                        currentSession = session;
+                        showMainApp();
+                        return;
+                    } else {
+                        localStorage.removeItem('icPudduSession');
+                    }
+                } catch (e) {
+                    localStorage.removeItem('icPudduSession');
+                }
+            }
             
-            // Setup drag & drop
-            setupDragAndDrop();
+            // Mostra schermata di login
+            showLogin();
         });
         
         function setupDragAndDrop() {
