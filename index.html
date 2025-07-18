@@ -28,6 +28,43 @@
         .header {
             text-align: center;
             margin-bottom: 40px;
+            position: relative;
+            min-height: 80px; /* Aggiungi spazio per il logo */
+        }
+
+        .header-logo {
+            position: absolute;
+            top: 0;
+            right: 0;
+            height: 100px;
+            width: auto;
+            opacity: 0.9;
+            transition: opacity 0.3s ease;
+            z-index: 10; /* Assicura che sia sopra gli altri elementi */
+        }
+
+        .header-logo:hover {
+            opacity: 1;
+        }
+
+        .header-content {
+            display: inline-block;
+            text-align: center;
+            width: 100%;
+        }
+
+        /* Responsive per mobile */
+        @media (max-width: 768px) {
+            .header {
+                min-height: auto;
+            }
+            
+            .header-logo {
+                position: static;
+                display: block;
+                margin: 0 auto 20px auto;
+                height: 60px;
+            }
         }
         
         .main-title {
@@ -563,13 +600,18 @@
             <button onclick="logout()" class="logout-btn">Esci</button>
         </div>
         <div class="header">
-            <div class="main-title">Prove Parallele IC Puddu</div>
-            <div class="subtitle">Processore automatico file CSV/Excel per la scuola Secondaria "Don Bosco"</div>
+            <img src="https://raw.githubusercontent.com/Emanuele-ElBasri/puddu-it-support/refs/heads/main/ICS_Puddu_logo%20-%20trasparente-blu1-u.svg" 
+                alt="Logo IC Puddu" 
+                class="header-logo">
+            <div class="header-content">
+                <div class="main-title">Prove Parallele IC Puddu</div>
+                <div class="subtitle">Processore automatico file CSV/Excel per la scuola Secondaria "Don Bosco"</div>
+            </div>
         </div>
         
         <div class="discipline-selector">
             <button class="discipline-btn italiano active" onclick="selectDiscipline('italiano')">
-                📕 ITALIANO
+                📙 ITALIANO
             </button>
             <button class="discipline-btn matematica" onclick="selectDiscipline('matematica')">
                 🔢 MATEMATICA
